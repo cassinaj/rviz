@@ -27,7 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <QtGlobal>
 #include <QTimer>
 
@@ -54,65 +53,59 @@
 
 using namespace rviz;
 
-ImageView::ImageView( QWidget* parent )
-  : QtOgreRenderWindow( parent )
-  , texture_it_(nh_)
-{
-  setAutoRender(false);
-  scene_manager_ = ogre_root_->createSceneManager( Ogre::ST_GENERIC, "TestSceneManager" );
+ImageView::ImageView(QWidget *parent)
+    : QtOgreRenderWindow(parent), texture_it_(nh_) {
+  // setAutoRender(false);
+  scene_manager_ =
+      ogre_root_->createSceneManager(Ogre::ST_GENERIC, "TestSceneManager");
 }
 
-ImageView::~ImageView()
-{
-  delete texture_;
-}
+ImageView::~ImageView() { delete texture_; }
 
-void ImageView::showEvent( QShowEvent* event )
-{
-  QtOgreRenderWindow::showEvent( event );
+void ImageView::showEvent(QShowEvent *event) {
+  QtOgreRenderWindow::showEvent(event);
 
   V_string paths;
-  paths.push_back(ros::package::getPath(ROS_PACKAGE_NAME) + "/ogre_media/textures");
+  paths.push_back(ros::package::getPath(ROS_PACKAGE_NAME) +
+                  "/ogre_media/textures");
   initializeResources(paths);
 
-  setCamera( scene_manager_->createCamera( "Camera" ));
+  setCamera(scene_manager_->createCamera("Camera"));
 
   std::string resolved_image = nh_.resolveName("image");
-  if( resolved_image == "/image" )
-  {
+  if (resolved_image == "/image") {
     ROS_WARN("image topic has not been remapped");
   }
 
   std::stringstream title;
   title << "rviz Image Viewer [" << resolved_image << "]";
-  setWindowTitle( QString::fromStdString( title.str() ));
+  setWindowTitle(QString::fromStdString(title.str()));
 
   texture_ = new ROSImageTexture();
 
-  try
-  {
+  try {
     texture_->clear();
 
     texture_sub_.reset(new image_transport::SubscriberFilter());
-    texture_sub_->subscribe(texture_it_, "image", 1, image_transport::TransportHints("raw"));
-    texture_sub_->registerCallback(boost::bind(&ImageView::textureCallback, this, _1));
-  }
-  catch (ros::Exception& e)
-  {
+    texture_sub_->subscribe(texture_it_, "image", 1,
+                            image_transport::TransportHints("raw"));
+    texture_sub_->registerCallback(
+        boost::bind(&ImageView::textureCallback, this, _1));
+  } catch (ros::Exception &e) {
     ROS_ERROR("%s", (std::string("Error subscribing: ") + e.what()).c_str());
   }
 
-  Ogre::MaterialPtr material =
-    Ogre::MaterialManager::getSingleton().create( "Material",
-                                                  Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
+  Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().create(
+      "Material", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
   material->setCullingMode(Ogre::CULL_NONE);
   material->getTechnique(0)->getPass(0)->setDepthWriteEnabled(true);
   material->getTechnique(0)->setLightingEnabled(false);
-  Ogre::TextureUnitState* tu = material->getTechnique(0)->getPass(0)->createTextureUnitState();
+  Ogre::TextureUnitState *tu =
+      material->getTechnique(0)->getPass(0)->createTextureUnitState();
   tu->setTextureName(texture_->getTexture()->getName());
-  tu->setTextureFiltering( Ogre::TFO_NONE );
+  tu->setTextureFiltering(Ogre::TFO_NONE);
 
-  Ogre::Rectangle2D* rect = new Ogre::Rectangle2D(true);
+  Ogre::Rectangle2D *rect = new Ogre::Rectangle2D(true);
   rect->setCorners(-1.0f, 1.0f, 1.0f, -1.0f);
   rect->setMaterial(material->getName());
   rect->setRenderQueueGroup(Ogre::RENDER_QUEUE_OVERLAY - 1);
@@ -120,47 +113,40 @@ void ImageView::showEvent( QShowEvent* event )
   aabb.setInfinite();
   rect->setBoundingBox(aabb);
 
-  Ogre::SceneNode* node = scene_manager_->getRootSceneNode()->createChildSceneNode();
+  Ogre::SceneNode *node =
+      scene_manager_->getRootSceneNode()->createChildSceneNode();
   node->attachObject(rect);
   node->setVisible(true);
 
-  QTimer* timer = new QTimer( this );
-  connect( timer, SIGNAL( timeout() ), this, SLOT( onTimer() ));
-  timer->start( 33 );
+  QTimer *timer = new QTimer(this);
+  connect(timer, SIGNAL(timeout()), this, SLOT(onTimer()));
+  timer->start(33);
 }
 
-void ImageView::onTimer()
-{
+void ImageView::onTimer() {
   ros::spinOnce();
 
   static bool first = true;
-  try
-  {
-    if( texture_->update() )
-    {
-      if( first )
-      {
+  try {
+    if (texture_->update()) {
+      if (first) {
         first = false;
 
-        resize( texture_->getWidth(), texture_->getHeight() );
+        resize(texture_->getWidth(), texture_->getHeight());
       }
     }
 
     ogre_root_->renderOneFrame();
-  }
-  catch( UnsupportedImageEncoding& e )
-  {
+  } catch (UnsupportedImageEncoding &e) {
     ROS_ERROR("%s", e.what());
   }
 
-  if( !nh_.ok() )
-  {
+  if (!nh_.ok()) {
     close();
   }
 }
 
-void ImageView::textureCallback(const sensor_msgs::Image::ConstPtr& msg)
-{
+void ImageView::textureCallback(const sensor_msgs::Image::ConstPtr &msg) {
   if (texture_) {
     texture_->addMessage(msg);
   }

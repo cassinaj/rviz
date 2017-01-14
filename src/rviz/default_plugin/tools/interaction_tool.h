@@ -38,14 +38,12 @@
 
 #include "move_tool.h"
 
-namespace rviz
-{
+namespace rviz {
 
 class BoolProperty;
 
-class InteractionTool : public Tool
-{
-Q_OBJECT
+class InteractionTool : public Tool {
+  Q_OBJECT
 public:
   InteractionTool();
   virtual ~InteractionTool();
@@ -55,32 +53,28 @@ public:
   virtual void activate();
   virtual void deactivate();
 
-  virtual int processMouseEvent( ViewportMouseEvent& event );
-  virtual int processKeyEvent( QKeyEvent* event, RenderPanel* panel );
+  virtual int processMouseEvent(ViewportMouseEvent &event);
+  virtual int processKeyEvent(QKeyEvent *event, RenderPanel *panel);
 
 public Q_SLOTS:
 
-  void hideInactivePropertyChanged() {};
+  void hideInactivePropertyChanged(){};
 
 protected:
-
-
   /** @brief Check if the mouse has moved from one object to another,
    * and update focused_object_ if so. */
-  void updateFocus( const ViewportMouseEvent& event );
- 
+  void updateFocus(const ViewportMouseEvent &event);
+
   /** @brief The object (control) which currently has the mouse focus. */
   InteractiveObjectWPtr focused_object_;
- 
+
   uint64_t last_selection_frame_count_;
 
   MoveTool move_tool_;
 
   BoolProperty *hide_inactive_property_;
+  int size_;
 };
-
 }
 
 #endif
-
-

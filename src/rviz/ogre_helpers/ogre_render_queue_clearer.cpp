@@ -73,4 +73,3 @@ bool OgreRenderQueueClearer::frameStarted (const Ogre::FrameEvent &evt)
 }
 
 }
-

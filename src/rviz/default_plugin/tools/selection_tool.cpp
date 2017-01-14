@@ -55,72 +55,51 @@
 
 #include "selection_tool.h"
 
-namespace rviz
-{
+namespace rviz {
 
 SelectionTool::SelectionTool()
-  : Tool()
-  , move_tool_( new MoveTool() )
-  , selecting_( false )
-  , sel_start_x_( 0 )
-  , sel_start_y_( 0 )
-  , moving_( false )
-{
+    : Tool(), move_tool_(new MoveTool()), selecting_(false), sel_start_x_(0),
+      sel_start_y_(0), moving_(false) {
   shortcut_key_ = 's';
   access_all_keys_ = true;
 }
 
-SelectionTool::~SelectionTool()
-{
-  delete move_tool_;
-}
+SelectionTool::~SelectionTool() { delete move_tool_; }
 
-void SelectionTool::onInitialize()
-{
-  move_tool_->initialize( context_ );
-}
+void SelectionTool::onInitialize() { move_tool_->initialize(context_); }
 
-void SelectionTool::activate()
-{
-  setStatus( "Click and drag to select objects on the screen." );
+void SelectionTool::activate() {
+  setStatus("Click and drag to select objects on the screen.");
   context_->getSelectionManager()->setTextureSize(512);
   selecting_ = false;
   moving_ = false;
-//  context_->getSelectionManager()->enableInteraction(true);
+  //  context_->getSelectionManager()->enableInteraction(true);
 }
 
-void SelectionTool::deactivate()
-{
+void SelectionTool::deactivate() {
   context_->getSelectionManager()->removeHighlight();
 }
 
-void SelectionTool::update(float wall_dt, float ros_dt)
-{
-  SelectionManager* sel_manager = context_->getSelectionManager();
+void SelectionTool::update(float wall_dt, float ros_dt) {
+  SelectionManager *sel_manager = context_->getSelectionManager();
 
-  if (!selecting_)
-  {
+  if (!selecting_) {
     sel_manager->removeHighlight();
   }
 }
 
-int SelectionTool::processMouseEvent( ViewportMouseEvent& event )
-{
-  SelectionManager* sel_manager = context_->getSelectionManager();
+int SelectionTool::processMouseEvent(ViewportMouseEvent &event) {
+  SelectionManager *sel_manager = context_->getSelectionManager();
 
   int flags = 0;
 
-  if( event.alt() )
-  {
+  if (event.alt()) {
     moving_ = true;
     selecting_ = false;
-  }
-  else
-  {
+  } else {
     moving_ = false;
 
-    if( event.leftDown() )
-    {
+    if (event.leftDown()) {
       selecting_ = true;
 
       sel_start_x_ = event.x;
@@ -128,57 +107,47 @@ int SelectionTool::processMouseEvent( ViewportMouseEvent& event )
     }
   }
 
-  if( selecting_ )
-  {
-    sel_manager->highlight( event.viewport, sel_start_x_, sel_start_y_, event.x, event.y );
+  if (selecting_) {
+    sel_manager->highlight(event.viewport, sel_start_x_, sel_start_y_, event.x,
+                           event.y);
 
-    if( event.leftUp() )
-    {
+    if (event.leftUp()) {
       SelectionManager::SelectType type = SelectionManager::Replace;
 
       M_Picked selection;
 
-      if( event.shift() )
-      {
+      if (event.shift()) {
         type = SelectionManager::Add;
-      }
-      else if( event.control() )
-      {
+      } else if (event.control()) {
         type = SelectionManager::Remove;
       }
 
-      sel_manager->select( event.viewport, sel_start_x_, sel_start_y_, event.x, event.y, type );
+      sel_manager->select(event.viewport, sel_start_x_, sel_start_y_, event.x,
+                          event.y, type);
 
       selecting_ = false;
     }
 
     flags |= Render;
-  }
-  else if( moving_ )
-  {
+  } else if (moving_) {
     sel_manager->removeHighlight();
 
-    flags = move_tool_->processMouseEvent( event );
+    flags = move_tool_->processMouseEvent(event);
 
-    if( event.type == QEvent::MouseButtonRelease )
-    {
+    if (event.type == QEvent::MouseButtonRelease) {
       moving_ = false;
     }
-  }
-  else
-  {
-    sel_manager->highlight( event.viewport, event.x, event.y, event.x, event.y );
+  } else {
+    sel_manager->highlight(event.viewport, event.x, event.y, event.x, event.y);
   }
 
   return flags;
 }
 
-int SelectionTool::processKeyEvent( QKeyEvent* event, RenderPanel* panel )
-{
-  SelectionManager* sel_manager = context_->getSelectionManager();
+int SelectionTool::processKeyEvent(QKeyEvent *event, RenderPanel *panel) {
+  SelectionManager *sel_manager = context_->getSelectionManager();
 
-  if( event->key() == Qt::Key_F )
-  {
+  if (event->key() == Qt::Key_F) {
     sel_manager->focusOnSelection();
   }
 
@@ -188,4 +157,4 @@ int SelectionTool::processKeyEvent( QKeyEvent* event, RenderPanel* panel )
 } // end namespace rviz
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS( rviz::SelectionTool, rviz::Tool )
+PLUGINLIB_EXPORT_CLASS(rviz::SelectionTool, rviz::Tool)
