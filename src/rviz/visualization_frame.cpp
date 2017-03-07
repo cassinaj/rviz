@@ -470,6 +470,8 @@ void VisualizationFrame::initMenus()
   help_menu->addAction( "Open rviz wiki in browser", this, SLOT( onHelpWiki() ));
   help_menu->addSeparator();
   help_menu->addAction( "&About", this, SLOT( onHelpAbout() ));
+  
+  menuBar()->setVisible(true);
 }
 
 void VisualizationFrame::initToolbars()
